@@ -1,6 +1,14 @@
+# =============================================================================
+# RESULTS DISPLAY: Visualizes fuzzy logic outputs within the Streamlit UI.
+# 1. Maps linguistic chat responses into numeric inputs for the inference engine.
+# 2. Displays the top-ranked destination as a primary highlighted recommendation.
+# 3. Renders a comparative match confidence for the Top 3 results.
+# =============================================================================
+
 import streamlit as st
-from utils import results, questions
-from inference_engine import recommend_destination
+import json
+from nav.utils import results, questions
+from fuzzy.inference_engine import recommend_destination
 
 def recommendations():
     st.title("Your Personalized Vacation Recommendations")
@@ -33,14 +41,22 @@ def recommendations():
         st.error("We couldn't find a perfect match. Try resetting and changing your preferences!")
         return
 
+    with open("fuzzy/countries.json") as f:
+        countries = json.load(f)
+
+
+        
     
-    # Destinació Principal
     st.markdown(f"""
-        <div style="background-color: #D3e4ff; padding: 20px; border-radius: 15px; border-left: 10px solid #1d4ed8; margin-bottom: 25px;">
+        <div style="background-color: #D3e4ff; padding: 25px; border-radius: 15px; border-left: 10px solid #1d4ed8; height: 100%;">
             <h2 style="margin: 0; color: #1e3a8a;">Top Pick: {best}</h2>
-            <p style="color: #1e3a8a; font-size: 1.1rem;">Based on your preferences, <b>{best}</b> is the ideal destination for your next trip!</p>
+            <p style="color: #1e3a8a; font-size: 1.1rem; margin-top: 10px;">
+                Based on your preferences, <b>{best}</b> is the ideal destination for your next trip!
+            </p>
         </div>
     """, unsafe_allow_html=True)
+
+    st.divider()
 
     # Llista de recomanacions detallada
     st.subheader("Analysis of Top 3 Destinations")
@@ -57,6 +73,29 @@ def recommendations():
         with col2:
             st.markdown(f"**Match Confidence: {display_score:.1f}%**")
             st.progress(score)
+    
+    
+    st.divider()
+    
+    data_best = countries[best]
+    
+    st.header("Quick Facts")
+    
+    # Utilitzem columnes niades per organitzar les mètriques en graella
+    m1, m2 = st.columns(2)
+    
+    with m1:
+        st.metric(label="Continent", value=data_best['continent'])
+        st.metric(label="Weather", value=data_best['weather'].capitalize())
+        st.metric(label="Duration", value=data_best['duration'].capitalize())
+
+    with m2:
+        st.metric(label="Budget", value=data_best['budget'].capitalize())
+        st.metric(label="Distance", value=data_best['distance'].capitalize())
+        # Per a llistes, seleccionem el primer element o les ajuntem
+        st.metric(label="Main Style", value=data_best['type'][0].capitalize())
+
+    
 
     st.divider()
     

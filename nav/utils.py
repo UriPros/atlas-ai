@@ -1,3 +1,11 @@
+# =============================================================================
+# NLP UTILS: Manages context-free grammar (CFG).
+# 1. Defines structural rules for parsing travel-related user responses.
+# 2. Extracts key linguistic entities (months, budget levels, weather, etc.).
+# 3. Maps extracted terms to a normalized numeric scale (1-10) for fuzzy logic.
+# =============================================================================
+
+
 from nltk import CFG, ChartParser
 
 # GRAMMAR
@@ -24,31 +32,40 @@ GRAMMAR_TEXT = """
     SEASON -> "spring" | "summer" | "autumn" | "fall" | "winter" | "summertime" | "wintertime"
 
     # ================= BUDGET ANSWERS =================
-    BUDGET_ANSWER -> CORE_BUDGET
-    BUDGET_ANSWER -> PRP AUX CORE_BUDGET
-    BUDGET_ANSWER -> PRP AUX PREF CORE_BUDGET
-    BUDGET_ANSWER -> ADV_OPT CORE_BUDGET
+    BUDGET_ANSWER -> BUDGET
+    BUDGET_ANSWER -> "my" "budget" "is" BUDGET
+    BUDGET_ANSWER -> "is" BUDGET | "it's" BUDGET
 
-    CORE_BUDGET -> BUDGET_LEVEL
-    CORE_BUDGET -> MOD BUDGET_LEVEL
-    CORE_BUDGET -> RANGE
-    CORE_BUDGET -> FLEX
-    CORE_BUDGET -> CURRENCY_AMOUNT
+    BUDGET -> CORE_BUDGET
+    BUDGET -> PRP AUX CORE_BUDGET
+    BUDGET -> PRP AUX PREF CORE_BUDGET
+    BUDGET -> ADV_OPT CORE_BUDGET
+    BUDGET -> ADV_OPT PREF CORE_BUDGET
 
+    CORE_BUDGET -> BUDGET_LIST
+    CORE_BUDGET -> BUDGET_LIST "budget"
+    
+    BUDGET_LIST -> BUDGET_LEVEL
+    BUDGET_LIST -> "a" BUDGET_LEVEL
+    BUDGET_LIST -> MOD BUDGET_LEVEL
+    BUDGET_LIST -> RANGE
+    BUDGET_LIST -> FLEX
+    BUDGET_LIST -> CURRENCY_AMOUNT
+
+    RANGE -> BUDGET_LEVEL SEP BUDGET_LEVEL
     RANGE -> "between" BUDGET_LEVEL SEP BUDGET_LEVEL
     RANGE -> "from" BUDGET_LEVEL "to" BUDGET_LEVEL
     RANGE -> "between" NUM AMOUNT "and" NUM AMOUNT
 
-    MOD -> "about" | "around" | "under" | "over" | "up to" | "less than" | "more than" | "a" | "an" | "the"
+    MOD -> "about" | "around" | "under" | "over" | "up" "to" | "less than" | "more than" | "a" | "an" | "the"
 
-    FLEX -> "any amount" | "no limit" | "not important" | "flexible" | "doesn't matter"
+    FLEX -> "any amount" | "no" "limit" | "not" "important" | "flexible" | "doesn't matter"
 
     MODIFIER -> "very" | "quite" | "rather" | "super" | "extremely" | "fairly"
 
     BUDGET_LEVEL -> "cheap" | "low" | "affordable" | "moderate" | "medium" | "reasonable" | "generous" | "high" | "expensive" | "luxury" | "budget" | "economical" | "average" | "mid"
 
     CURRENCY_AMOUNT -> NUM AMOUNT
-    NUM -> "1" | "2" | "3" | "4" | "100" | "500" | "1000" | "1500" | "2000" | "3000" | "5000" | "10000"
     AMOUNT -> "dollars" | "euros" | "pounds" | "$" | "€" | "£"
 
     # ================= WEATHER ANSWERS =================
@@ -56,28 +73,41 @@ GRAMMAR_TEXT = """
     WEATHER_ANSWER -> PRP AUX CORE_WEATHER
     WEATHER_ANSWER -> PRP AUX PREF CORE_WEATHER
     WEATHER_ANSWER -> ADV_OPT CORE_WEATHER
+    WEATHER_ANSWER -> ADV_OPT PREF CORE_WEATHER
 
     CORE_WEATHER -> WEATHER_LIST
     CORE_WEATHER -> WEATHER_LIST "weather"
 
-    WEATHER_LIST -> WEATHER
-    WEATHER_LIST -> WEATHER SEP WEATHER_LIST
+    WEATHER_LIST -> WEATHER1
+    WEATHER_LIST -> "a" WEATHER1
+
+    WEATHER1 -> WEATHER
+    WEATHER1 -> WEATHER SEP WEATHER_LIST
 
     WEATHER -> "cold" | "cool" | "warm" | "hot" | "mild" | "sunny" | "rainy" | "dry" | "windy" | "humid" | "cloudy" | "clear" | "breezy" | "chilly" | "temperate" | "tropical"
 
     # ================= DURATION ANSWERS =================
-    DURATION_ANSWER -> CORE_DURATION
-    DURATION_ANSWER -> PRP AUX CORE_DURATION
-    DURATION_ANSWER -> PRP AUX PREF CORE_DURATION
-    DURATION_ANSWER -> ADV_OPT CORE_DURATION
+    DURATION_ANSWER -> "just" DURATION
+    DURATION_ANSWER -> DURATION
+    
+    DURATION -> CORE_DURATION
+    DURATION -> PRP AUX CORE_DURATION
+    DURATION -> PRP AUX PREF CORE_DURATION
+    DURATION -> ADV_OPT CORE_DURATION
+    DURATION -> ADV_OPT PREF CORE_DURATION
+    
+    CORE_DURATION -> DURATION_LIST
+    CORE_DURATION -> DURATION_LIST "duration"
+    CORE_DURATION -> DURATION_LIST "trip"
+    CORE_DURATION -> DURATION_LIS "experience"
 
-    CORE_DURATION -> DURATION_LEVEL
-    CORE_DURATION -> DURATION_RANGE
-    CORE_DURATION -> DURATION_DAYS
+    DURATION_LIST -> DURATION_LEVEL
+    DURATION_LIST -> DURATION_RANGE
+    DURATION_LIST -> DURATION_DAYS
 
-    DURATION_LEVEL -> "short" | "brief" | "quick" | "medium" | "moderate" | "long" | "extended" | "lengthy"
+    DURATION_LEVEL -> "short" | "brief" | "quick" | "medium" | "moderate" | "long" | "extended" | "lengthy" | "very" "long"
 
-    DURATION_RANGE -> "a few days" | "a week" | "two weeks" | "a month" | "several weeks"
+    DURATION_RANGE -> "a" "few" "days" | "a" "week" | "two" "weeks" | "a" "month" | "two" "months" 
 
     DURATION_DAYS -> NUM "days" | NUM "weeks"
 
@@ -86,43 +116,63 @@ GRAMMAR_TEXT = """
     DISTANCE_ANSWER -> PRP AUX CORE_DISTANCE
     DISTANCE_ANSWER -> PRP AUX PREF CORE_DISTANCE
     DISTANCE_ANSWER -> ADV_OPT CORE_DISTANCE
+    DISTANCE_ANSWER -> ADV_OPT PREF CORE_DISTANCE
 
-    CORE_DISTANCE -> DISTANCE_LEVEL
-    CORE_DISTANCE -> DISTANCE_RANGE
+    CORE_DISTANCE -> DISTANCE_LIST
+    CORE_DISTANCE -> DISTANCE_LIST "distance"
+    CORE_DISTANCE -> DISTANCE_LIST "destination" | DISTANCE_LIST "destinations"
+    CORE_DISTANCE -> DISTANCE_LIST "travel"
 
-    DISTANCE_LEVEL -> "near" | "close" | "local" | "here" | "regional" | "mid" | "middle" | "medium" | "far" | "far away" | "long distance" | "distant" | "remote"
+    DISTANCE_LIST -> DISTANCE
+    DISTANCE_LIST -> "a" DISTANCE
 
-    DISTANCE_RANGE -> "short flight" | "medium flight" | "long flight" | "driving distance"
+    DISTANCE -> DISTANCE_LEVEL
+    DISTANCE -> DISTANCE_RANGE 
+
+    DISTANCE_LEVEL -> "near" | "close" | "local" | "here" | "regional" | "mid" | "middle" | "medium" | "far" | "far" "away" | "long" "distance" | "distant" | "remote" | "very" "far"
+
+    DISTANCE_RANGE -> "short" "flight" | "medium" "flight" | "long" "flight" | "driving" "distance"
 
     # ================= TYPE/VACATION STYLE ANSWERS =================
     TYPE_ANSWER -> CORE_TYPE
     TYPE_ANSWER -> PRP AUX CORE_TYPE
     TYPE_ANSWER -> PRP AUX PREF CORE_TYPE
     TYPE_ANSWER -> ADV_OPT CORE_TYPE
+    TYPE_ANSWER -> ADV_OPT PREF CORE_TYPE
 
     CORE_TYPE -> TYPE_LIST
-    CORE_TYPE -> TYPE_LIST "vacation" | TYPE_LIST "trip"
+    CORE_TYPE -> TYPE_LIST "vacation"
+    CORE_TYPE -> TYPE_LIST "trip"
 
-    TYPE_LIST -> VACATION_TYPE
-    TYPE_LIST -> VACATION_TYPE SEP TYPE_LIST
+    TYPE_LIST -> VACATION_TYPE1
+    TYPE_LIST -> "a" VACATION_TYPE
+    
+    VACATION_TYPE1 -> VACATION_TYPE
+    VACATION_TYPE1 -> VACATION_TYPE SEP TYPE_LIST
 
     VACATION_TYPE -> "relaxing" | "adventure" | "cultural" | "beach" | "mountain" | "city" | "countryside" | "romantic" | "family" | "solo" | "luxury" | "backpacking" | "road trip" | "cruise" | "ski" | "spa" | "food" | "historical" | "eco" | "volunteer" | "nature" | "hiking" | "activities"
 
     # ================= SHARED / COMPACT =================
     PRP -> "i" | "we" | "us" | "my" | "our"
+    
     AUX -> "can" | "would" | "usually" | "want" | "like" | "prefer" | "need" | "enjoy" | "love"
+    
+    PREF -> "a"
     PREF -> GO
     PREF -> AUX2
     PREF -> AUX2 GO
+    PREF -> AUX2 "to" GO
 
     AUX2 -> "prefer" | "like" | "want" | "would" | "need"
     GO -> VERB P_IN
+    GO -> "to" VERB P_IN
     VERB -> "going" | "go" | "traveling" | "travel" | "doing" | "do" | "visiting" | "visit" | "taking" | "take"
 
     ADV_OPT -> "preferably" | "ideally" | "if possible" | "honestly" | "well" | "probably" | "maybe"
 
     P_IN -> "in" | "during" | "between" | "for"
     SEP -> "and" | "or" | "," | "but"
+    NUM -> "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "15" | "100" | "200" | "300" | "400" | "500" | "600" | "700" | "800" | "900" | "1000" | "1500" | "2000" | "3000" | "5000" | "10000" | "one" | "two" | "three" | "four" | "five" | "six" | "seven" | "eight" | "nine" | "ten" | "fiveteen"
 """
 
 # PARSER INITIALIZATION
@@ -318,7 +368,7 @@ def duration_to_number(duration):
         "brief": 3, "a few days": 3.5,
         "a week": 5, "medium": 5.5, "moderate": 6,
         "two weeks": 7, "long": 8.5,
-        "several weeks": 9, "extended": 9, "lengthy": 9.5, "a month": 10
+        "very long": 9, "several weeks": 9, "extended": 9, "lengthy": 9.5, "a month": 10
     }
 
     for word, number in phrase_map.items():
@@ -354,7 +404,7 @@ def distance_to_number(distance):
         "far": 6, "medium flight": 6.5,
         "remote": 7, "long distance": 7.5, 
         "far away": 8, "distant": 8,
-        "long flight": 10
+        "very far": 9, "long flight": 10
     }
 
     for word in distance:
@@ -402,13 +452,13 @@ questions = [
         {
             'key': 'time',
             'question': "When would you like to go on vacation?",
-            'example': "Example: 'I like going during summer'",
+            'example': "Example: 'I enjoy going during summer'",
             'extract_func': extract_months
         },
         {
             'key': 'budget',
             'question': "What's your budget for this vacation?",
-            'example': "Example: 'I prefer a cheap budget'",
+            'example': "Example: 'I would like between cheap and medium'",
             'extract_func': extract_budget
         },
         {
@@ -420,19 +470,19 @@ questions = [
         {
             'key': 'duration',
             'question': "How long would you like your vacation to be?",
-            'example': "Example: 'A short trip'",
+            'example': "Example: 'We want a short trip'",
             'extract_func': extract_duration
         },
         {
             'key': 'distance',
             'question': "How far are you willing to travel?",
-            'example': "Example: 'I prefer nearby destinations'",
+            'example': "Example: 'I prefer a close destinations'",
             'extract_func': extract_distance
         },
         {
             'key': 'vacation_type',
             'question': "What type of vacation are you looking for?",
-            'example': "Example: 'A relaxing  vacation'",
+            'example': "Example: 'Preferably a relaxing and cultural vacation'",
             'extract_func': extract_type
         }
     ]

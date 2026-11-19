@@ -1,3 +1,10 @@
+# =============================================================================
+# DEFUZZIFICATION: Processes fuzzy scores to rank destinations.
+# 1. Calculates the mean score for each candidate destination.
+# 2. Sorts results to identify the highest performing options.
+# 3. Extracts and returns the top 3 destinations as a dictionary.
+# =============================================================================
+
 def defuzzify_destination(scores):
     if not scores:
         return 0.0

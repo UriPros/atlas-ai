@@ -1,6 +1,13 @@
+# =============================================================================
+# RULES EVALUATION: Maps fuzzified inputs to destinations using forward chaining.
+# 1. Iterates through the rule set to check for active conditions.
+# 2. Calculates rule activation strength by averaging input memberships.
+# 3. Aggregates results into a scoring matrix for all valid destinations.
+# =============================================================================
+
 from collections import defaultdict
 
-def evaluate_rules(fuzzified_inputs, rules, destinations):
+def evaluate_rules(fuzzified_inputs, rules, countries):
 
     destination_scores = defaultdict(dict)
 
@@ -20,7 +27,7 @@ def evaluate_rules(fuzzified_inputs, rules, destinations):
         rule_strength = sum(strengths) / len(strengths)
 
         for dest in recommended:
-            if dest in destinations:
+            if dest in countries:
                 destination_scores[dest][f"r{idx}"] = rule_strength
 
     return destination_scores

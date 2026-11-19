@@ -1,5 +1,12 @@
+# =============================================================================
+# CHAT INTERFACE: Streamlit-based UI for interactive user data collection.
+# 1. Manages chat history and navigation between questions.
+# 2. Integrates Natural Language Parsing (NLP) to validate user responses.
+# 3. Transitions to the recommendation phase once all inputs are collected.
+# =============================================================================
+
 import streamlit as st
-from utils import create_parser, safe_parse, questions
+from nav.utils import create_parser, safe_parse, questions
 
 def chat():
     st.title("Travel Advisor AI")
@@ -44,16 +51,14 @@ def chat():
 
                 if extracted:
                     # Save only if it matches the current question
-                    st.session_state.responses[q["key"]] = user_input.lower()
+                    st.session_state.responses[q["key"]] = " ".join(extracted).lower() #same as user_input.lower()
                     st.session_state.step += 1
                     st.rerun()
                 else:
                     st.session_state.chat.append({"role": "assistant", "content": f"That doesn't answer the question. {q['example']}"})
-                    st.error("I couldn't find the keyword I need. Please try again!")
                     st.rerun()
             else:
                 st.session_state.chat.append({"role": "assistant", "content": f"I didn't understand you. {q['example']}"})
-                st.error("I didn't quite catch that. Try using simple words!")
                 st.rerun()
 
     else:

@@ -1,8 +1,18 @@
+# =============================================================================
+# MAIN APPLICATION: Root controller for the Atlas AI Travel Advisor.
+# 1. Configures global page settings, custom CSS themes, and session states.
+# 2. Implements a sidebar for real-time user profile tracking and progress.
+# 3. Manages high-level routing between the Chat and Recommendation views.
+#
+# Authors:  Alex Vilamitjana, Sara Gibert, Oriol Pros
+# Subject:  Knowledge-Based Systems
+# =============================================================================
+
 import streamlit as st
 
 from nav.chat import chat
 from nav.recommendations import recommendations
-from utils import number_questions
+from nav.utils import number_questions
 
 # Page Configuration
 st.set_page_config(
@@ -88,8 +98,6 @@ if "page" not in st.session_state:
     st.session_state.page = "chat"
 
 
-
-
 # Sidebar Information
 with st.sidebar:
     st.image("img/logotype_atlas.png", use_container_width=True)
@@ -114,8 +122,17 @@ with st.sidebar:
 
     st.subheader("Current Profile")
     if st.session_state.responses:
-        for word, value in st.session_state.responses.items():
-            st.write(f"**{word.replace('_',' ').title()}:** {value}")
+        for key, value in st.session_state.responses.items():
+
+            label = key.replace('_', ' ').title()
+            
+            # Ensure we display a string
+            if isinstance(value, str):
+                display_value = value
+            else:
+                ", ".join(value).title()
+            
+            st.write(f"**{label}:** {display_value}")
     else:
         st.info("I'm waiting for your answers to build your profile...")
 
@@ -126,7 +143,6 @@ with st.sidebar:
         st.session_state.chat = []
         st.session_state.responses = {}
         st.rerun()
-
 
 
 col1, col2 = st.columns(2)
@@ -141,7 +157,6 @@ with col2:
         st.rerun()
 
 
-
 if st.session_state.page == "chat":
     chat()
 elif st.session_state.page == "recommendation":
@@ -153,4 +168,3 @@ st.markdown("""
         Atlas Vacation Logic © 2026 | Version 1.0
     </p>
 """, unsafe_allow_html=True)
-

@@ -1,3 +1,10 @@
+# =============================================================================
+# FUZZIFICATION: Converts  inputs into fuzzy membership values.
+# 1. Loads fuzzy set definitions from JSON configuration files.
+# 2. Applies trapezoidal membership functions to calculate degree of truth.
+# 3. Maps user input variables to their corresponding fuzzy sets.
+# =============================================================================
+
 import json
 
 def load_sets (data = "fuzzy_sets.json"):
